@@ -5,10 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:cf": "npx @cloudflare/next-on-pages",
-    "start": "next start",
-    "lint": "next lint",
-    "preview:cf": "npx wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat"
+    "build:cf": "opennextjs-cloudflare build",
+    "deploy": "opennextjs-cloudflare build && wrangler pages deploy",
+    "preview": "opennextjs-cloudflare build && wrangler pages dev",
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "^15.5.12",
@@ -16,7 +16,7 @@
     "react-dom": "^18"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
+    "@opennextjs/cloudflare": "^1.17.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
