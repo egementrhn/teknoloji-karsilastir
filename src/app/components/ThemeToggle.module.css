@@ -1,0 +1,47 @@
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-left: 1rem;
+}
+
+.toggleBtn:hover {
+    background: var(--bg-secondary);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.iconContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    transition: transform var(--transition-fast);
+}
+
+.toggleBtn:hover .icon {
+    transform: rotate(15deg);
+}
+
+/* Specific styles depending on theme */
+.dark {
+    color: #eab308;
+    /* Yellow/Gold for moon */
+}
+
+.light {
+    color: #f59e0b;
+    /* Orange for sun */
+}

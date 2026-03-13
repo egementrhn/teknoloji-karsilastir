@@ -1,0 +1,175 @@
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.header h1 {
+    font-size: clamp(2rem, 3vw, 3rem);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.compareTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+    /* Ensure scrolling on small screens */
+}
+
+.featureCol {
+    width: 20%;
+    padding: 1.5rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.02);
+    border-right: 1px solid var(--border-color);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.productCol {
+    width: 40%;
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.productCol:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.productHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.productImg {
+    height: 150px;
+    object-fit: contain;
+    transition: transform var(--transition-fast);
+}
+
+.productName {
+    font-size: 1.25rem;
+    transition: color var(--transition-fast);
+}
+
+.productName:hover {
+    color: var(--accent-primary);
+}
+
+/* Table body classes */
+.compareTable tbody th {
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.compareTable tbody td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.compareTable tbody td:last-child {
+    border-right: none;
+}
+
+.compareTable tbody tr:last-child th,
+.compareTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.compareTable small {
+    color: var(--text-muted);
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    gap: 1rem;
+}
+
+.emptyState h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.emptyState p {
+    max-width: 420px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.goBackBtn {
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.goBackBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.clearBtn {
+    margin-left: 1rem;
+    padding: 0.35rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 100px;
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    vertical-align: middle;
+}
+
+.clearBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+}
+
+.removeBtn {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.removeBtn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
