@@ -1,4 +1,6 @@
 import { createClient } from "@libsql/client";
+// Not: Bu script sadece Node.js'te çalışır (npm run seed).
+// Uygulama kodu src/lib/db/client.ts'deki HTTP client'ı kullanır.
 import { mockPhones } from "../app/data/mockPhones";
 
 const db = createClient({

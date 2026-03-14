@@ -8,15 +8,16 @@
     "build:cf": "opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare build && wrangler pages deploy",
     "preview": "opennextjs-cloudflare build && wrangler pages dev",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "npx tsx --env-file=.env.local src/scripts/seed.ts"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
     "next": "^15.5.12",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@libsql/client": "^0.17.0",
     "@opennextjs/cloudflare": "^1.17.1",
     "@types/node": "^20",
     "@types/react": "^18",
