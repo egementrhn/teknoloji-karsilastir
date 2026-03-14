@@ -21,7 +21,14 @@ export interface ResultSet {
   last_insert_rowid: string | null;
 }
 
-type RawRow = (string | number | null)[];
+type CellValue =
+  | { type: "null" }
+  | { type: "integer"; value: string }
+  | { type: "real"; value: number }
+  | { type: "text"; value: string }
+  | { type: "blob"; base64: string };
+
+type RawRow = CellValue[];
 
 interface HranaResponse {
   results: Array<
@@ -109,7 +116,19 @@ async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
         const obj: Record<string, string | number | null> = {};
         cols.forEach((col, i) => {
           const cell = rawRow[i];
-          obj[col.name] = cell === undefined ? null : cell;
+          if (!cell || cell.type === "null") {
+            obj[col.name] = null;
+          } else if (cell.type === "integer") {
+            obj[col.name] = Number(cell.value);
+          } else if (cell.type === "real") {
+            obj[col.name] = cell.value;
+          } else if (cell.type === "text") {
+            obj[col.name] = cell.value;
+          } else if (cell.type === "blob") {
+            obj[col.name] = cell.base64;
+          } else {
+            obj[col.name] = null;
+          }
         });
         return obj;
       },
