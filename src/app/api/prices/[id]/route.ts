@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockPhones } from "../../../data/mockPhones";
+import { getPhoneStoreUrls } from "@/lib/db/phones";
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "";
 
@@ -139,12 +139,11 @@ export async function GET(
   }
 
   const { id } = await params;
-  const phone = mockPhones.find((p) => p.id === id);
-  if (!phone) {
+  const storeUrls = await getPhoneStoreUrls(id);
+  if (!storeUrls) {
     return NextResponse.json({ error: "Phone not found" }, { status: 404 });
   }
 
-  const { storeUrls } = phone;
   const fetches: Promise<PriceResult>[] = [];
 
   if (storeUrls.amazon) fetches.push(fetchAmazonPrice(storeUrls.amazon));

@@ -1,12 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
-import { mockPhones } from "../../data/mockPhones";
+import { getPhoneById, getAllPhoneIds } from "@/lib/db/phones";
 import styles from "./page.module.css";
 
 interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
 interface LivePrice {
@@ -19,10 +17,12 @@ interface LivePrice {
 
 async function getLivePrices(id: string): Promise<LivePrice[] | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/prices/${id}`, {
-      next: { revalidate: 3600 },
-    });
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      (process.env.CF_PAGES_URL
+        ? `https://${process.env.CF_PAGES_URL}`
+        : "http://localhost:3000");
+    const res = await fetch(`${baseUrl}/api/prices/${id}`);
     if (!res.ok) return null;
     const data = await res.json();
     if (data?.error) return null;
@@ -32,9 +32,11 @@ async function getLivePrices(id: string): Promise<LivePrice[] | null> {
   }
 }
 
+export const revalidate = 3600;
+
 export default async function PhoneDetail({ params }: PageProps) {
   const { id } = await params;
-  const phone = mockPhones.find((p) => p.id === id);
+  const phone = await getPhoneById(id);
 
   if (!phone) {
     notFound();
@@ -365,8 +367,7 @@ export default async function PhoneDetail({ params }: PageProps) {
   );
 }
 
-export function generateStaticParams() {
-  return mockPhones.map((phone) => ({
-    id: phone.id,
-  }));
+export async function generateStaticParams() {
+  const ids = await getAllPhoneIds();
+  return ids.map((id) => ({ id }));
 }
