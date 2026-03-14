@@ -173,3 +173,9 @@
     background: rgba(239, 68, 68, 0.15);
     border-color: #ef4444;
 }
+
+.cellBetter {
+    background: rgba(74, 222, 128, 0.07);
+    color: var(--text-primary);
+    font-weight: 500;
+}
