@@ -96,7 +96,8 @@ async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
 
   const body = (await res.json()) as HranaResponse;
 
-  return body.results.map((r) => {
+  // Slice to stmts.length to drop the trailing "close" response
+  return body.results.slice(0, stmts.length).map((r) => {
     if (r.type === "error")
       throw new Error(`Turso query error: ${r.error.message}`);
 
