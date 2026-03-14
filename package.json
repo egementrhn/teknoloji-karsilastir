@@ -9,9 +9,13 @@
     "deploy": "opennextjs-cloudflare build && wrangler pages deploy",
     "preview": "opennextjs-cloudflare build && wrangler pages dev",
     "lint": "next lint",
-    "seed": "npx tsx --env-file=.env.local src/scripts/seed.ts"
+    "seed": "npx tsx --env-file=.env.local src/scripts/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.1",
     "next": "^15.5.12",
     "react": "^18",
     "react-dom": "^18"
@@ -23,6 +27,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "cheerio": "^1.0.0-rc.12",
+    "drizzle-kit": "^0.31.9",
     "eslint": "^8",
     "eslint-config-next": "^15.5.12",
     "postcss": "^8",

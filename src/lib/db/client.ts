@@ -1,52 +1,39 @@
-/**
- * Minimal Turso HTTP client using the Hrana-over-HTTP protocol.
- * Works in every environment (Node.js, Cloudflare Workers, Edge) — no native
- * dependencies, no WebSockets required.
- */
+import { drizzle } from "drizzle-orm/sqlite-proxy";
+import * as schema from "./schema";
 
-export interface Value {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface CellValue {
   type: "null" | "integer" | "real" | "text" | "blob";
   value?: string | number;
+  base64?: string;
 }
 
-export interface Stmt {
-  sql: string;
-  args?: (string | number | null | Value)[];
+type RawRow = CellValue[];
+
+interface HranaResult {
+  cols: { name: string; decltype: string | null }[];
+  rows: RawRow[];
+  affected_row_count: number;
+  last_insert_rowid: string | null;
 }
 
-export interface ResultSet {
+interface HranaResponse {
+  results: Array<
+    | { type: "ok"; response: { type: "execute"; result: HranaResult } }
+    | { type: "ok"; response: { type: "close" } }
+    | { type: "error"; error: { message: string } }
+  >;
+}
+
+interface ResultSet {
   cols: { name: string }[];
-  rows: Record<string, string | number | null>[];
+  rows: unknown[][];
   rows_affected: number;
   last_insert_rowid: string | null;
 }
 
-type CellValue =
-  | { type: "null" }
-  | { type: "integer"; value: string }
-  | { type: "real"; value: number }
-  | { type: "text"; value: string }
-  | { type: "blob"; base64: string };
-
-type RawRow = CellValue[];
-
-interface HranaResponse {
-  results: Array<
-    | {
-        type: "ok";
-        response: {
-          type: "execute";
-          result: {
-            cols: { name: string; decltype: string | null }[];
-            rows: RawRow[];
-            affected_row_count: number;
-            last_insert_rowid: string | null;
-          };
-        };
-      }
-    | { type: "error"; error: { message: string } }
-  >;
-}
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 function getConfig() {
   const url = process.env.TURSO_DATABASE_URL;
@@ -57,12 +44,26 @@ function getConfig() {
   if (!token)
     throw new Error("TURSO_AUTH_TOKEN environment variable is not set");
 
-  // Convert libsql:// → https://
-  const baseUrl = url.replace(/^libsql:\/\//, "https://");
-  return { baseUrl, token };
+  // libsql:// → https://
+  return { baseUrl: url.replace(/^libsql:\/\//, "https://"), token };
 }
 
-async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
+// ─── Cell decoder ─────────────────────────────────────────────────────────────
+
+function decodeCell(cell: CellValue): string | number | null {
+  if (!cell || cell.type === "null") return null;
+  if (cell.type === "integer") return Number(cell.value);
+  if (cell.type === "real") return cell.value as number;
+  if (cell.type === "text") return cell.value as string;
+  if (cell.type === "blob") return cell.base64 ?? null;
+  return null;
+}
+
+// ─── HTTP pipeline ────────────────────────────────────────────────────────────
+
+async function pipeline(
+  stmts: { sql: string; args: unknown[] }[],
+): Promise<ResultSet[]> {
   const { baseUrl, token } = getConfig();
 
   const requests = [
@@ -70,16 +71,14 @@ async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
       type: "execute",
       stmt: {
         sql: stmt.sql,
-        args: stmt.args
-          ? stmt.args.map((a): Value => {
-              if (a === null) return { type: "null" };
-              if (typeof a === "number")
-                return Number.isInteger(a)
-                  ? { type: "integer", value: String(a) }
-                  : { type: "real", value: a };
-              return { type: "text", value: String(a) };
-            })
-          : [],
+        args: stmt.args.map((a): CellValue => {
+          if (a === null || a === undefined) return { type: "null" };
+          if (typeof a === "number")
+            return Number.isInteger(a)
+              ? { type: "integer", value: String(a) }
+              : { type: "real", value: a };
+          return { type: "text", value: String(a) };
+        }),
         named_args: [],
         want_rows: true,
       },
@@ -103,35 +102,19 @@ async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
 
   const body = (await res.json()) as HranaResponse;
 
-  // Slice to stmts.length to drop the trailing "close" response
+  // slice(0, stmts.length) drops the trailing "close" response
   return body.results.slice(0, stmts.length).map((r) => {
     if (r.type === "error")
       throw new Error(`Turso query error: ${r.error.message}`);
 
-    const raw = r.response.result;
+    const raw = (
+      r as { type: "ok"; response: { type: "execute"; result: HranaResult } }
+    ).response.result;
     const cols = raw.cols;
 
-    const rows: Record<string, string | number | null>[] = raw.rows.map(
-      (rawRow) => {
-        const obj: Record<string, string | number | null> = {};
-        cols.forEach((col, i) => {
-          const cell = rawRow[i];
-          if (!cell || cell.type === "null") {
-            obj[col.name] = null;
-          } else if (cell.type === "integer") {
-            obj[col.name] = Number(cell.value);
-          } else if (cell.type === "real") {
-            obj[col.name] = cell.value;
-          } else if (cell.type === "text") {
-            obj[col.name] = cell.value;
-          } else if (cell.type === "blob") {
-            obj[col.name] = cell.base64;
-          } else {
-            obj[col.name] = null;
-          }
-        });
-        return obj;
-      },
+    // Drizzle sqlite-proxy expects rows as ordered value arrays, not objects
+    const rows: unknown[][] = raw.rows.map((rawRow) =>
+      cols.map((_, i) => decodeCell(rawRow[i])),
     );
 
     return {
@@ -143,18 +126,23 @@ async function pipeline(stmts: Stmt[]): Promise<ResultSet[]> {
   });
 }
 
-// ─── Public API (mirrors @libsql/client surface used in phones.ts) ────────────
+// ─── Drizzle sqlite-proxy instance ───────────────────────────────────────────
 
-export const db = {
-  /** Run a single SQL statement. */
-  async execute(stmt: string | Stmt): Promise<ResultSet> {
-    const s: Stmt = typeof stmt === "string" ? { sql: stmt } : stmt;
-    const [result] = await pipeline([s]);
-    return result;
-  },
+export const db = drizzle(
+  async (sql: string, params: unknown[], method: string) => {
+    const [result] = await pipeline([{ sql, args: params }]);
 
-  /** Run multiple SQL statements in one round-trip. */
-  async batch(stmts: (string | Stmt)[]): Promise<ResultSet[]> {
-    return pipeline(stmts.map((s) => (typeof s === "string" ? { sql: s } : s)));
+    if (method === "run") {
+      return { rows: [] };
+    }
+
+    if (method === "get") {
+      // single row — return flat array
+      return { rows: result.rows[0] ?? [] };
+    }
+
+    // "all" | "values" — return 2-D array
+    return { rows: result.rows };
   },
-};
+  { schema },
+);
